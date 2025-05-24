@@ -1,0 +1,142 @@
+
+
+  <!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>Play Earn Miner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #playEarnBtn {
+      background-color: #007BFF;
+      color: white;
+      font-size: 2.5rem;
+      padding: 20px 60px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 15px rgba(0, 123, 255, 0.5);
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    #playEarnBtn:hover:not(:disabled) {
+      background-color: #0056b3;
+    }
+    #playEarnBtn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #status {
+      margin-top: 30px;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    #minersCount {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 1.4rem;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="playEarnBtn">Play Earn</button>
+  <div id="status">اضغط على الزر لبدء التعدين</div>
+  <div id="minersCount">عدد المعدنين: 0</div>
+
+  <!-- تحميل مكتبة CoinIMP -->
+  <script src="https://www.coinimp.com/scripts/api.min.js"></script>
+
+  <script>
+    const btn = document.getElementById('playEarnBtn');
+    const status = document.getElementById('status');
+    const minersCountDiv = document.getElementById('minersCount');
+    let miner = null;
+    let isMining = false;
+
+    // استبدل هذا المفتاح بمفتاح موقعك من CoinIMP (تحتاج تسجيل حساب)
+    const SITE_KEY = 'YOUR_COINIMP_SITE_KEY';
+
+    btn.onclick = function() {
+      if (isMining) {
+        // إيقاف التعدين إذا ضغط مرة ثانية (اختياري)
+        miner.stop();
+        isMining = false;
+        btn.innerText = 'Play Earn';
+        status.innerText = 'تم إيقاف التعدين';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'جاري البدء...';
+      status.innerText = 'يتم إعداد التعدين...';
+
+      // تهيئة المعدن
+      miner = new CoinIMP.Anonymous(SITE_KEY);
+
+      miner.on('open', () => {
+        isMining = true;
+        btn.disabled = false;
+        btn.innerText = 'Mining...';
+        status.innerText = 'التعدين جارٍ بنجاح.';
+      });
+
+      miner.on('close', () => {
+        isMining = false;
+        btn.innerText = 'Play Earn';
+        status.innerText = 'تم إيقاف التعدين.';
+      });
+
+      miner.on('job', () => {
+        // كل مرة يأخذ مهمة جديدة
+      });
+
+      miner.on('found', () => {
+        // كل مرة يحل مهمة
+      });
+
+      miner.on('accepted', () => {
+        // كل مرة يتم قبول الحل من الشبكة
+      });
+
+      miner.on('error', (e) => {
+        status.innerText = 'حدث خطأ: ' + e.message;
+        btn.disabled = false;
+        btn.innerText = 'Play Earn';
+      });
+
+      miner.start();
+
+      btn.disabled = false;
+    };
+
+    // دالة لجلب عدد المعدنين الفعالين عبر API CoinIMP (تحديث كل 10 ثواني)
+    async function updateMinersCount() {
+      try {
+        // رابط API عام من CoinIMP لعدد المستخدمين النشطين (غير رسمي)
+        const resp = await fetch('https://www.coinimp.com/api/stats');
+        const data = await resp.json();
+        // عدد المعدنين على الموقع الحالي (يعتمد على الموقع، يمكن تغييره)
+        const count = data && data.onlineUsers ? data.onlineUsers : 0;
+        minersCountDiv.innerText = 'عدد المعدنين: ' + count;
+      } catch {
+        minersCountDiv.innerText = 'عدد المعدنين: غير متوفر';
+      }
+    }
+
+    updateMinersCount();
+    setInterval(updateMinersCount, 10000); // تحديث كل 10 ثواني
+  </script>
+</body>
+</html>
